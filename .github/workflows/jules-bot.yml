@@ -1,9 +1,12 @@
 name: Jules Bot Automation
 
-# O fluxo é disparado sempre que um comentário é criado em uma issue
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 on:
   issue_comment:
     types: [created]
+# ... resto do código igual
 
 # Define permissões estritas para o GITHUB_TOKEN (Princípio do Menor Privilégio)
 permissions:
