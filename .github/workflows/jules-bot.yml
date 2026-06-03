@@ -25,7 +25,7 @@ jobs:
           COMMENT_BODY: ${{ github.event.comment.body }}
           COMMENT_AUTHOR: ${{ github.event.comment.user.login }}
           ISSUE_BODY: ${{ github.event.issue.body }} 
-      run: |
+        run: |
           echo "========================================="
           echo " GATILHO DISPARADO COM SUCESSO "
           echo "========================================="
