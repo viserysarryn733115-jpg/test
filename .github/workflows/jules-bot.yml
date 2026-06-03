@@ -35,12 +35,13 @@ jobs:
           echo "Número da Issue: $ISSUE_NUMBER"
           echo "========================================="
           
-          # ---------------------------------------------------------
           if [ "$AUTHOR_ASSOCIATION" != "OWNER" ] && [ "$AUTHOR_ASSOCIATION" != "COLLABORATOR" ]; then
-            echo "Aviso: Usuário não autorizado para executar comandos do Jules."
+            echo "Aviso: Usuário não autorizado."
             exit 0
           fi
 
+          echo "Processando o comando recebido de forma segura..."
+          echo "Conteúdo lido: $COMMENT_BODY"
           if: github.event.comment.body == '@jules execute process'
           
           echo "Processando o comando recebido de forma segura..."
