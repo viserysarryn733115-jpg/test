@@ -6,17 +6,13 @@ env:
 on:
   issue_comment:
     types: [created]
-# ... resto do código igual
 
-# Define permissões estritas para o GITHUB_TOKEN (Princípio do Menor Privilégio)
 permissions:
-  contents: read      # Permite ler o código do repositório, se necessário
-  issues: write       # Permite que o bot responda ou altere a issue, se necessário
-  pull-requests: write # Caso a issue seja, na verdade, um Pull Request
+  contents: read
+  issues: write
 
 jobs:
   process-jules-command:
-    # O Job só roda se o comentário contiver explicitamente "@jules"
     if: contains(github.event.comment.body, '@jules')
     runs-on: ubuntu-latest
 
@@ -24,31 +20,14 @@ jobs:
       - name: Checkout do Repositório
         uses: actions/checkout@v4
 
-      - name: Executar Jules Bot
-        # Passar dados dinâmicos via 'env' bloqueia ataques de Injeção de Comando (Command Injection)
+      - name: Executar Jules Bot de Forma Segura
         env:
           COMMENT_BODY: ${{ github.event.comment.body }}
           COMMENT_AUTHOR: ${{ github.event.comment.user.login }}
-          AUTHOR_ASSOCIATION: ${{ github.event.comment.author_association }}
-          ISSUE_NUMBER: ${{ github.event.issue.number }}
         run: |
           echo "========================================="
-          echo "Invocando o Jules Bot..."
-          echo "Autor do comentário: $COMMENT_AUTHOR ($AUTHOR_ASSOCIATION)"
-          echo "Número da Issue: $ISSUE_NUMBER"
+          echo " GATILHO DISPARADO COM SUCESSO "
           echo "========================================="
-          
-          if [ "$AUTHOR_ASSOCIATION" != "OWNER" ] && [ "$AUTHOR_ASSOCIATION" != "COLLABORATOR" ]; then
-            echo "Aviso: Usuário não autorizado."
-            exit 0
-          fi
-
-          echo "Processando o comando recebido de forma segura..."
-          echo "Conteúdo lido: $COMMENT_BODY"
-          if: github.event.comment.body == '@jules execute process'
-          
-          echo "Processando o comando recebido de forma segura..."
-          echo "Conteúdo lido: $COMMENT_BODY"
-          
-          # Exemplo fictício de execução:
-          # python script/jules_processor.py --text "$COMMENT_BODY" --issue "$ISSUE_NUMBER"
+          echo "Usuário que comentou: $COMMENT_AUTHOR"
+          echo "Texto do comentário: $COMMENT_BODY"
+          echo "========================================="
