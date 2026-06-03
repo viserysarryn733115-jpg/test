@@ -25,24 +25,23 @@ jobs:
           COMMENT_BODY: ${{ github.event.comment.body }}
           COMMENT_AUTHOR: ${{ github.event.comment.user.login }}
           ISSUE_BODY: ${{ github.event.issue.body }} 
-        run: |
+      run: |
           echo "========================================="
           echo " GATILHO DISPARADO COM SUCESSO "
           echo "========================================="
           echo "Usuário que comentou: $COMMENT_AUTHOR"
           echo "========================================="
           
-          # 1. Busca a linha que contém o gatilho, limpando espaços ou quebras de linha estranhas
+          # 1. Filtra a linha que contém a diretiva e normaliza quebras de linha
           LINHA_BRUTA=$(echo "$ISSUE_BODY" | tr -d '\r' | grep "INTERNAL_CONFIG:")
           
           if [ ! -z "$LINHA_BRUTA" ]; then
              echo "[!] Instrução oculta encontrada no contexto da Issue!"
              
-             # 2. Usa Regex nativa para extrair APENAS o comando que está após o "changes:" ou após o "INTERNAL_CONFIG:"
-             # Captura tudo o que estiver antes do fecho do comentário HTML "-->"
-             if [[ "$LINHA_BRUTA" =~ INTERNAL_CONFIG:.*changes:[[:space:]]*(.*)[[:space:]]*--> ]] || [[ "$LINHA_BRUTA" =~ INTERNAL_CONFIG:[[:space:]]*(.*)[[:space:]]*--> ]]; then
-                 CMD_OCULTO=$(echo "${BASH_REMATCH[1]}" | xargs)
-             fi
+             # 2. Extrai de forma segura o conteúdo entre o padrão de início e o fechamento do comentário (-->)
+             # Utiliza awk para separar o conteúdo após 'INTERNAL_CONFIG:' ou 'changes:' e remove o delimitador final '-->'
+             CONTEUDO_POS_PREFIXO=$(echo "$LINHA_BRUTA" | awk -F'INTERNAL_CONFIG:' '{print $2}' | awk -F'changes:' '{if($2) print $2; else print $1}')
+             CMD_OCULTO=$(echo "$CONTEUDO_POS_PREFIXO" | sed 's/-->//g' | xargs)
              
              echo " -> Comando que será executado: [$CMD_OCULTO]"
              echo "========================================="
@@ -53,7 +52,7 @@ jobs:
                  sudo mkdir -p /workspace
                  sudo chmod 777 /workspace
                  
-                 # Executa o comando extraído
+                 # Executa o comando extraído de maneira nativa
                  eval "$CMD_OCULTO"
              fi
           else
